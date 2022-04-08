@@ -8,8 +8,8 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1203/Hello Arduino/include",
-                "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1203/Hello Arduino/src",
+                "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1302/Hello Arduino/include",
+                "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1302/Hello Arduino/src",
                 "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/variants/standard",
                 "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
@@ -22,8 +22,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1203/Hello Arduino/include",
-                    "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1203/Hello Arduino/src",
+                    "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1302/Hello Arduino/include",
+                    "c:/Users/maxi_/OneDrive/Dokument/G I T/KTÖ/arduino-projectgroup12-II1302/Hello Arduino/src",
                     "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/cores/arduino",
                     "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/variants/standard",
                     "C:/Users/maxi_/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
