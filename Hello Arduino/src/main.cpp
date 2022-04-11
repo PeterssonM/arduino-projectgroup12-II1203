@@ -15,7 +15,7 @@ void lightningon()
 {
   while(PIND & (0b000000100)) //Only read from pin 2 on port D.
   {
-    PORTB = PORTB | (1<<0); //Set output pin 13 to high.
+    PORTB = PORTB | (1<<0); //Set output pin 8 to high.
   }
 }
 
