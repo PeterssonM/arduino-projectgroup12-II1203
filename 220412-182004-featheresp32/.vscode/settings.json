@@ -1,0 +1,6 @@
+{
+    "vscode-corda.isCordaProject": false,
+    "files.associations": {
+        "*.yaml": "home-assistant"
+    }
+}
