@@ -1,6 +1,0 @@
-# PlatformIO creates a project in itself, we only need to push the .cpp files to avoid redundancy. 
-.pio
-.vscode
-/Hello Arduino/include
-/Hello Arduino/lib
-/Hello Arduino/test
