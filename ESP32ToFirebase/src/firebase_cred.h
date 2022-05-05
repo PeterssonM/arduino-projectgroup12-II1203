@@ -1,9 +1,9 @@
 // Insert Firebase project API Key
-#define API_KEY "REPLACE_WITH_YOUR_FIREBASE_PROJECT_API_KEY"
+#define API_KEY "AIzaSyAVj7INM7guffGsZhXLNSydDBEmYakAQLk"
 
 // Insert Authorized Email and Corresponding Password
-#define USER_EMAIL "REPLACE_WITH_THE_AUTHORIZED_USER_EMAIL"
-#define USER_PASSWORD "REPLACE_WITH_THE_AUTHORIZED_USER_PASSWORD"
+#define USER_EMAIL "esp32_ai-thinker@kth.se"
+#define USER_PASSWORD "KTH-Link-12"
 
 // Insert Firebase storage bucket ID e.g bucket-name.appspot.com
-#define STORAGE_BUCKET_ID "REPLACE_WITH_YOUR_STORAGE_BUCKET_ID"
+#define STORAGE_BUCKET_ID "projectgroup12-2f2a2.appspot.com"
