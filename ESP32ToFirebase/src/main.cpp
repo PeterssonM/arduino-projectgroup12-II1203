@@ -16,7 +16,10 @@
 #include "driver/rtc_io.h"
 #include <SPIFFS.h>
 #include <FS.h>
+#include "SD_MMC.h"
+#include <EEPROM.h> 
 #include <Firebase_ESP_Client.h>
+#include <camera_module_pins.h>
 //Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
@@ -24,97 +27,22 @@
 #include <firebase_cred.h>
 
 // Photo File Name to save in SPIFFS
-#define FILE_PHOTO "/data/photo.jpg"
-#define FILE_PHOTO_TEST "test.jpg"
+#define FILE_PHOTO "/data/m.jpg"
 
-
-// OV2640 camera module pins (CAMERA_MODEL_AI_THINKER)
-#define PWDN_GPIO_NUM     32
-#define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
-#define SIOD_GPIO_NUM     26
-#define SIOC_GPIO_NUM     27
-#define Y9_GPIO_NUM       35
-#define Y8_GPIO_NUM       34
-#define Y7_GPIO_NUM       39
-#define Y6_GPIO_NUM       36
-#define Y5_GPIO_NUM       21
-#define Y4_GPIO_NUM       19
-#define Y3_GPIO_NUM       18
-#define Y2_GPIO_NUM        5
-#define VSYNC_GPIO_NUM    25
-#define HREF_GPIO_NUM     23
-#define PCLK_GPIO_NUM     22
-
-boolean takeNewPhoto = true;
+boolean motion = true;
 
 //Define Firebase Data objects
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig configF;
 
-bool taskCompleted = false;
-
-// Check if photo capture was successful
-bool checkPhoto( fs::FS &fs ) {
-  File f_pic = fs.open( FILE_PHOTO );
-  unsigned int pic_sz = f_pic.size();
-  return ( pic_sz > 100 );
-}
-
-// Capture Photo and Save it to SPIFFS
-void capturePhotoSaveSpiffs( void ) {
-  camera_fb_t * fb = NULL; // pointer
-  bool ok = 0; // Boolean indicating if the picture has been taken correctly
-  do {
-    // Take a photo with the camera
-    Serial.println("Taking a photo...");
-
-    fb = esp_camera_fb_get();
-    if (!fb) {
-      Serial.println("Camera capture failed");
-      return;
-    }
-    // Photo file name
-    Serial.printf("Picture file name: %s\n", FILE_PHOTO);
-    File file = SPIFFS.open(FILE_PHOTO, FILE_WRITE);
-    // Insert the data in the photo file
-    if (!file) {
-      Serial.println("Failed to open file in writing mode");
-    }
-    else {
-      file.write(fb->buf, fb->len); // payload (image), payload length
-      Serial.print("The picture has been saved in ");
-      Serial.print(FILE_PHOTO);
-      Serial.print(" - Size: ");
-      Serial.print(file.size());
-      Serial.println(" bytes");
-    }
-    // Close the file
-    file.close();
-    esp_camera_fb_return(fb);
-
-    // check if file has been correctly saved in SPIFFS
-    ok = checkPhoto(SPIFFS);
-  } while ( !ok );
-}
+/*Initiate*/
 
 void initWiFi(){
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
-  }
-}
-
-void initSPIFFS(){
-  if (!SPIFFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    ESP.restart();
-  }
-  else {
-    delay(500);
-    Serial.println("SPIFFS mounted successfully");
   }
 }
 
@@ -146,7 +74,13 @@ void initCamera(){
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
     config.fb_count = 2;
-  } else {
+  }
+  /*if (psramFound()) {
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 20;
+    config.fb_count = 2;
+  }*/
+  else {
     config.frame_size = FRAMESIZE_SVGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
@@ -159,16 +93,19 @@ void initCamera(){
   } 
 }
 
-void setup() {
-  // Serial port for debugging purposes
-  Serial.begin(115200);
-  Serial.print("Hello World0");
-  initWiFi();
-  initSPIFFS();
-  // Turn-off the 'brownout detector'
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
-  initCamera();
+void init_sd_card(){
+  if(!SD_MMC.begin()){
+    Serial.println("SD Card Mount Failed");
+    return;
+  }
+  uint8_t cardType = SD_MMC.cardType();
+  if(cardType == CARD_NONE){
+    Serial.println("No SD Card attached");
+    return;
+  }
+}
 
+void init_firebase(){
   //Firebase
   // Assign the api key
   configF.api_key = API_KEY;
@@ -182,24 +119,77 @@ void setup() {
   Firebase.reconnectWiFi(true);
 }
 
-void loop() {
-  //Serial.println("Hello World1");
-  if (takeNewPhoto) {
-    capturePhotoSaveSpiffs();
-    takeNewPhoto = false;
+/*Action*/
+
+void take_picture(){
+  camera_fb_t * fb = NULL;
+  fb = esp_camera_fb_get();  
+  if(!fb) {
+    Serial.println("Camera capture failed");
+    return;
   }
-  delay(1);
-  if (Firebase.ready() && !taskCompleted){
-    taskCompleted = true;
+  String path = FILE_PHOTO;
+  fs::FS &fs = SD_MMC; 
+  Serial.printf("Picture file name: %s\n", path.c_str());
+  File file = fs.open(path.c_str(), FILE_WRITE);
+  if(!file){
+    Serial.println("Failed to open file in writing mode");
+  } 
+  else {
+    file.write(fb->buf, fb->len); // payload (image), payload length
+    Serial.printf("Saved file to path: %s\n", path.c_str());
+  }
+  file.close();
+  esp_camera_fb_return(fb); 
+  
+  //Turn off cam flash.
+  pinMode(4, OUTPUT);
+  digitalWrite(4, LOW);
+  rtc_gpio_hold_en(GPIO_NUM_4);
+}
+
+void setup() {
+  // Serial port for debugging purposes
+  Serial.begin(115200);
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Turn-off the 'brownout detector'
+  Serial.println("Hello World!");
+
+  Serial.println("Initiating WiFi...");
+  initWiFi();
+
+  init_sd_card();
+  Serial.println("Initiating SD-card...");
+
+  Serial.println("Initiating Camera...");
+  initCamera();
+
+  Serial.println("Initiating Firebase...");
+  init_firebase();
+
+  //esp_deep_sleep_start();
+  //Serial.println("This will never be printed");
+}
+boolean once = true;
+void loop() {
+  if(motion){
+    Serial.println("Snaping a picture...");
+    take_picture();
+    motion = false;
+  }
+  delay(10);
+  if (Firebase.ready() && once == true){
     Serial.print("Uploading picture... ");
 
     //MIME type should be valid to avoid the download problem.
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, FILE_PHOTO_TEST /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, FILE_PHOTO /* path of remote file stored in the bucket */, "image/jpeg" /* mime type */)){
+    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID, FILE_PHOTO, mem_storage_type_flash, FILE_PHOTO, "image/jpeg")){
       Serial.printf("\nDownload URL: %s\n", fbdo.downloadURL().c_str());
     }
     else{
       Serial.println(fbdo.errorReason());
     }
+    once = false;
   }
+
+  //StorageReference 
 }
