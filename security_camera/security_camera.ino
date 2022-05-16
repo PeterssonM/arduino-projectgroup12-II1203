@@ -1,4 +1,4 @@
-#include "esp_camera.h"
+//#include "esp_camera.h"
 #include "Arduino.h"
 #include "FS.h"                
 #include "SD_MMC.h"
