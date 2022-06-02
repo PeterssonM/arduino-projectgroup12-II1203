@@ -211,9 +211,9 @@ void setup() {
     }
   }
 
-  if(!SPIFFS.format()){
+  /*if(!SPIFFS.format()){
     Serial.println("SPIFFS: ERROR formating");  
-  }
+  }*/
 
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
   Serial.println("Going to sleep now, Zzz...");
